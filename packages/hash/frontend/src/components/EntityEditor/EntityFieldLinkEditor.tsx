@@ -20,7 +20,6 @@ import {
 } from "./types";
 import { entityName } from "../../lib/entities";
 
-// @todo make this not need to know about accountId
 type MinimalEntity = { accountId: string; entityId: string; name: string };
 
 type EntitySelectProps = {
@@ -90,7 +89,7 @@ export const EntityFieldLinkEditor: VoidFunctionComponent<
         setEntityOptions(
           (results as BlockProtocolEntity[]).map(
             ({ accountId, entityId, ...properties }) => ({
-              accountId,
+              accountId: accountId!,
               entityId,
               name: entityName({ entityId, ...properties }),
             }),

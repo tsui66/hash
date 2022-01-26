@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@headlessui/react": "1.4.1",
-    "blockprotocol": "0.0.1",
+    "blockprotocol": "0.0.5",
     "lodash": "4.17.21",
     "react-table": "7.7.0",
     "uuid": "8.3.2"

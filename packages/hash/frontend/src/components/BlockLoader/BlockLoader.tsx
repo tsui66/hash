@@ -21,6 +21,7 @@ import { useFileUpload } from "../hooks/useFileUpload";
 import { LinkGroup, UnknownEntity } from "../../graphql/apiTypes.gen";
 import { useBlockProtocolCreateLinks } from "../hooks/blockProtocolFunctions/useBlockProtocolCreateLinks";
 import { useBlockProtocolDeleteLinks } from "../hooks/blockProtocolFunctions/useBlockProtocolDeleteLinks";
+import { BlockProtocolLinkedAggregation } from "blockprotocol";
 
 type BlockLoaderProps = {
   accountId: string;
@@ -139,6 +140,8 @@ export const BlockLoader: VoidFunctionComponent<BlockLoaderProps> = ({
   if (sandboxingEnabled && (shouldSandbox || sourceUrl.endsWith(".html"))) {
     return (
       <BlockFramer
+        // @todo replace with proper field as part of fixing table block
+        linkedAggregations={[] as BlockProtocolLinkedAggregation[] | undefined}
         sourceUrl={sourceUrl}
         blockProperties={{
           ...blockProperties,
@@ -154,6 +157,8 @@ export const BlockLoader: VoidFunctionComponent<BlockLoaderProps> = ({
     <RemoteBlock
       {...blockProperties}
       {...functions}
+      // @todo replace with proper field as part of fixing table block
+      linkedAggregations={[] as BlockProtocolLinkedAggregation[] | undefined}
       editableRef={editableRef}
       onBlockLoaded={onBlockLoaded}
       sourceUrl={sourceUrl}

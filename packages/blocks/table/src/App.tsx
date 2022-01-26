@@ -31,7 +31,6 @@ type AppProps = {
   initialState?: TableOptions<{}>["initialState"] & {
     columns?: { Header: string; accessor: string }[];
   };
-  entityId: string;
 };
 
 const defaultData: AppProps["data"] = { data: [] };
@@ -64,7 +63,7 @@ const useTableData = (data: AppProps["data"]) => {
 export const App: BlockComponent<AppProps> = ({
   data = defaultData,
   initialState,
-  schemas,
+  entityTypes: schemas,
   updateEntities,
   entityId,
   aggregateEntities,
@@ -420,7 +419,9 @@ export const App: BlockComponent<AppProps> = ({
                       cell.column.id,
                     );
                     const propertyDef = getSchemaPropertyDefinition(
-                      (schemas ?? {})[entity.type],
+                      (schemas ?? []).find(
+                        (schema) => schema.title === entity.type,
+                      ),
                       property,
                     );
                     const readOnly = propertyDef?.readOnly;

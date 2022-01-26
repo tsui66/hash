@@ -70,7 +70,12 @@ export const SearchView: VoidFunctionComponent<SearchViewProps> = ({
                   }
                   onSelect={() => updateMenuState({ selectedIndex: index })}
                   icon={
-                    <img src={icon} alt={displayName} className={iconStyles} />
+                    // @todo add a fallback icon
+                    <img
+                      src={icon ?? ""}
+                      alt={displayName ?? undefined}
+                      className={iconStyles}
+                    />
                   }
                   title={displayName!}
                 />

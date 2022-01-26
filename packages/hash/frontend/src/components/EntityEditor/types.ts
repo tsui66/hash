@@ -1,6 +1,7 @@
 import {
   BlockProtocolCreateLinksFunction,
   BlockProtocolDeleteLinksFunction,
+  DistributedOmit,
 } from "blockprotocol";
 
 export type EntityLinkDefinition = {
@@ -11,7 +12,7 @@ export type EntityLinkDefinition = {
 
 export type CreateLinkFnWithFixedSource = {
   (
-    payload: Omit<
+    payload: DistributedOmit<
       Parameters<BlockProtocolCreateLinksFunction>[0][0],
       "sourceAccountId" | "sourceEntityId"
     >,

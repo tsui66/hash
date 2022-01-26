@@ -41,9 +41,6 @@ type AppProps = {
   initialHtml?: string;
   initialWidth?: number;
   initialHeight?: number;
-  entityId: string;
-  entityTypeId?: string;
-  accountId: string;
 };
 
 const getInitialState = ({

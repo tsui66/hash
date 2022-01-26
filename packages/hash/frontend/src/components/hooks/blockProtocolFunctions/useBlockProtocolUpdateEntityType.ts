@@ -44,9 +44,9 @@ export const useBlockProtocolUpdateEntityType = (
     async (actions) => {
       const results: BlockProtocolEntityType[] = [];
       // TODO: Support multiple actions in one GraphQL mutation for transaction integrity and better status reporting
-      for (const { entityId, schema } of actions) {
+      for (const { entityTypeId, schema } of actions) {
         const variables: UpdateEntityTypeMutationVariables = {
-          entityId,
+          entityId: entityTypeId,
           accountId,
           schema,
         };

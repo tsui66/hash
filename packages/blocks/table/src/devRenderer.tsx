@@ -180,7 +180,7 @@ const App = () => {
       <Component
         data={data}
         initialState={initialState}
-        schemas={schemas}
+        entityTypes={Object.values(schemas)}
         updateEntities={updateEntities}
         aggregateEntities={aggregateEntities}
         entityId="table-1"

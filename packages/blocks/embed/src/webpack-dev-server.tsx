@@ -70,8 +70,6 @@ function AppComponent() {
     <div className={tw`mt-4 w-1/2 mx-auto`}>
       <Component
         accountId="uuid-1234-account"
-        type="uuid-1234-type"
-        id="uuid-1234-id"
         entityId="uuid-1234-id"
         entityTypeId="Embed"
         getEmbedBlock={getEmbedBlock}

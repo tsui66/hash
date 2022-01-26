@@ -62,7 +62,8 @@ const toBlockConfig = (
 ): BlockConfig => {
   const defaultVariant: BlockVariant = {
     description: options.description,
-    displayName: options.displayName ?? toDisplayName(options.name),
+    displayName:
+      options.displayName ?? toDisplayName(options.name ?? "Unnamed Block"),
     icon: options.icon,
     properties: {},
   };
