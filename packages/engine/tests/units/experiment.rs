@@ -310,8 +310,9 @@ impl ExpectedOutput {
         globals: &Globals,
         analysis: &Analysis,
     ) -> Result<()> {
-        // TODO sort by step index so we fail early.
-        for (step, expected_states) in &self.json_state {
+        let mut json_state = self.json_state.iter().collect::<Vec<_>>();
+        json_state.sort_unstable();
+        for (step, expected_states) in json_state {
             let step = step
                 .parse::<usize>()
                 .wrap_err_lazy(|| format!("Could not parse {step:?} as number of a step"))?;
