@@ -122,6 +122,7 @@ pub async fn sim_run<P: SimulationOutputPersistenceRepr>(
             }
         };
 
+        tracing::trace!("Persisting the step output for step {steps_taken}");
         // Persist the output
         persistence_service
             .add_step_output(step_result.output)

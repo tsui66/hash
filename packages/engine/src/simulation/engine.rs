@@ -185,6 +185,7 @@ impl Engine {
     }
 
     pub async fn run_output_packages(&mut self) -> Result<SimulationStepOutput> {
+        tracing::trace!("Running output packages");
         let (state, context) = self.store.take()?;
         let state = Arc::new(state);
         let context = Arc::new(context);

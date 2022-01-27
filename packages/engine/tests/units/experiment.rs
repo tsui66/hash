@@ -67,7 +67,9 @@ pub async fn run_test_suite<P: AsRef<Path>>(
     language: Language,
     experiment: Option<&str>,
 ) {
-    std::env::set_var("RUST_LOG", "info");
+    let rust_log = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());
+
+    std::env::set_var("RUST_LOG", rust_log);
 
     let project_path = project_path.as_ref();
 
@@ -254,7 +256,7 @@ fn assert_subset_value(subset: &Value, superset: &Value, path: String) -> Result
         (Value::Number(a), Value::Number(b)) if a.is_f64() && b.is_f64() => {
             ensure!(
                 (a.as_f64().unwrap() - b.as_f64().unwrap()).abs() < f64::EPSILON,
-                "{path:?}: Expected `{a} == {b}`"
+                "{path:?}: Expected `{a}` but was `{b}`"
             );
         }
         (Value::Array(a), Value::Array(b)) => {
@@ -282,7 +284,7 @@ fn assert_subset_value(subset: &Value, superset: &Value, path: String) -> Result
         _ => {
             ensure!(
                 subset == superset,
-                "{path:?}: Expected `{} == {}`",
+                "{path:?}: Expected `{}` but was `{}`",
                 serde_json::to_string_pretty(subset).unwrap(),
                 serde_json::to_string_pretty(superset).unwrap()
             );
@@ -308,6 +310,7 @@ impl ExpectedOutput {
         globals: &Globals,
         analysis: &Analysis,
     ) -> Result<()> {
+        // TODO sort by step index so we fail early.
         for (step, expected_states) in &self.json_state {
             let step = step
                 .parse::<usize>()

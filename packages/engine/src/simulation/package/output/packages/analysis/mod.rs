@@ -77,11 +77,14 @@ impl GetWorkerSimStartMsg for Analysis {
 #[async_trait]
 impl Package for Analysis {
     async fn run(&mut self, state: Arc<State>, _context: Arc<Context>) -> Result<Output> {
+        tracing::trace!("Running analysis output package");
         // TODO: use filtering to avoid exposing hidden values to users
         let read = state.agent_pool().read_batches()?;
         // TODO: propagate Deref trait bound through run
         let dynamic_pool = read.iter().map(|v| v.deref()).collect::<Vec<_>>();
         self.analyzer.run(&dynamic_pool, state.num_agents())?;
+
+        tracing::trace!("Analysis output package finished");
         // TODO: why doesn't into work?
         Ok(Output::AnalysisOutput(
             self.analyzer.get_latest_output_set(),

@@ -75,6 +75,7 @@ impl GetWorkerSimStartMsg for JsonState {
 #[async_trait]
 impl Package for JsonState {
     async fn run(&mut self, state: Arc<State>, _context: Arc<Context>) -> Result<Output> {
+        tracing::trace!("Running json_state output package");
         let agent_states: std::result::Result<Vec<_>, crate::datastore::error::Error> = state
             .agent_pool()
             .read_batches()?
@@ -103,6 +104,7 @@ impl Package for JsonState {
             })
             .collect();
 
+        tracing::trace!("Json_state output package completed");
         Ok(Output::JsonStateOutput(JsonStateOutput {
             inner: agent_states,
         }))
