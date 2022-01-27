@@ -67,9 +67,9 @@ pub async fn run_test_suite<P: AsRef<Path>>(
     language: Language,
     experiment: Option<&str>,
 ) {
-    let rust_log = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());
-
-    std::env::set_var("RUST_LOG", rust_log);
+    if std::env::var("RUST_LOG").is_err() {
+        std::env::set_var("RUST_LOG", "warn");
+    }
 
     let project_path = project_path.as_ref();
 
