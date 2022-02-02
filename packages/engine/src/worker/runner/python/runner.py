@@ -345,11 +345,16 @@ class Runner:
         :param message_pool: List of state message (i.e. outbox) batch objects
         """
         sim = self.sims[sim_id]
+
         print("POTATO")
-        print(f"Latest {agent_pool[0].batch_version})")
-        current_batch = self.batches.batches.get(agent_pool[0].id, None)
-        if current_batch:
-            print(f"Stored Batch version: {current_batch.batch_version}")
+        if len(agent_pool) > 0:
+            print(f"Latest {agent_pool[0].batch_version}")
+            current_batch = self.batches.batches.get(agent_pool[0].id, None)
+            if current_batch:
+                print(f"Stored Batch version: {current_batch.batch_version}")
+        else:
+            print("agent pool is empty")
+
         self._load_pools(sim, agent_pool, message_pool)
         sim.state.set_pools(agent_pool, message_pool, sim.state_loaders)
 
