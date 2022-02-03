@@ -7,16 +7,13 @@ pub struct Config {
     pub num_workers: usize,
 }
 
+/// Vec of the workers that are allocated to this simulation run
 pub type WorkerAllocation = Vec<Worker>;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, PartialOrd, Ord)]
+#[derive(derive_new::new, Clone, Copy, Debug, Eq, PartialEq, PartialOrd, Ord)]
 pub struct Worker(WorkerIndex);
 
 impl Worker {
-    pub fn new(index: WorkerIndex) -> Worker {
-        Worker(index)
-    }
-
     pub fn index(&self) -> WorkerIndex {
         self.0
     }

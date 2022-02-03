@@ -337,9 +337,7 @@ impl TaskSharedStore {
         };
         Ok(split)
     }
-}
 
-impl TaskSharedStore {
     /// Fallible clone. Fails with write access to state.
     fn try_clone(&self) -> Result<Self> {
         let state = match &self.state {
