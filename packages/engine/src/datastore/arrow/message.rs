@@ -60,6 +60,42 @@ lazy_static! {
     ]);
 }
 
+pub fn validate_recipient_offsets(msg_batch: &RecordBatch) -> Result<()> {
+    let msgs = msg_batch
+        .column(super::message::MESSAGE_COLUMN_INDEX)
+        .as_any()
+        .downcast_ref::<array::ListArray>()
+        .ok_or(Error::InvalidArrowDowncast { name: "messages".into() })?
+        .values();
+
+    let recipients = msgs
+        .as_any()
+        .downcast_ref::<array::StructArray>()
+        .ok_or(Error::InvalidArrowDowncast { name: "messages".into() })?
+        .columns()[0]
+        .as_any()
+        .downcast_ref::<array::ListArray>()
+        .ok_or(Error::InvalidArrowDowncast { name: "to".into() })?
+        .values();
+
+    let recipient_strings = recipients
+        .as_any()
+        .downcast_ref::<array::StringArray>()
+        .ok_or(Error::InvalidArrowDowncast { name: "to".into() })?;
+
+    let total_num_recipients = recipient_strings.len();
+    for i_recipient in 0..total_num_recipients {
+        let recipient_string_len = recipient_strings.value_length(i_recipient);
+        tracing::debug!("Recipient {i_recipient} length: {recipient_string_len}");
+        if recipient_string_len < 0 {
+            return Err(Error::from(format!(
+                "Recipient {i_recipient} has negative length: {recipient_string_len}"
+            )));
+        }
+    }
+    Ok(())
+}
+
 #[must_use]
 pub fn get_message_arrow_builder() -> array::ListBuilder<array::StructBuilder> {
     let to_builder = array::StringBuilder::new(64);
@@ -282,8 +318,10 @@ pub fn messages_column_from_serde_values(
     outbound_messages_to_arrow_column(&native_column, builder)
 }
 
-pub fn get_column_from_list_array(array: &array::ListArray) -> Result<Vec<Vec<Outbound>>> {
-    let mut result = Vec::with_capacity(array.len());
+pub fn messages_from_list_array(array: &array::ListArray) -> Result<Vec<Vec<Outbound>>> {
+    let n_agents = array.len();
+    let mut agents_msgs = Vec::with_capacity(n_agents);
+
     let vals = array.values();
     let vals = vals
         .as_any()
@@ -292,49 +330,55 @@ pub fn get_column_from_list_array(array: &array::ListArray) -> Result<Vec<Vec<Ou
             name: MESSAGE_COLUMN_NAME.into(),
         })?;
 
-    let (to_column, r#type_column, data_column) = get_columns_from_struct_array(vals)?;
-    let _to_values = to_column.values();
-    let to_values = _to_values
+    let (to_col, r#type_col, data_col) = get_columns_from_struct_array(vals)?;
+    let to_vals = to_col.values();
+    let to_vals = to_vals
         .as_any()
         .downcast_ref::<array::StringArray>()
         .ok_or(Error::InvalidArrowDowncast { name: "to".into() })?;
 
-    let mut offset = 0;
+    let mut msgs_offset = 0;
     let mut to_offset = 0;
 
-    for i in 0..array.len() {
-        let messages_len = array.value_length(i) as usize;
-        let mut messages: Vec<Outbound> = Vec::with_capacity(messages_len);
-        for j in 0..messages_len {
-            let to_len = to_column.value_length(offset + j) as usize;
-            let to: Vec<&str> = (0..to_len)
-                .map(|j| to_values.value(to_offset + j))
-                .collect();
-            let r#type = r#type_column.value(offset + j);
-            let data_string = data_column.value(offset + j);
-            messages.push(get_generic(&to, r#type, data_string)?);
-            to_offset += to_len;
+    for i_agent in 0..n_agents {
+        let n_agent_msgs = array.value_length(i_agent) as usize;
+        let mut agent_msgs: Vec<Outbound> = Vec::with_capacity(n_agent_msgs);
+
+        for i_msg in 0..n_agent_msgs {
+            let n_recipients = to_col.value_length(msgs_offset + i_msg);
+            tracing::debug!("n_recipients {n_recipients}");
+            let n_recipients = n_recipients as usize;
+            let mut to: Vec<&str> = Vec::with_capacity(n_recipients);
+            for i_recipient in 0..n_recipients {
+                to.push(to_vals.value(to_offset + i_recipient));
+            }
+            let r#type = r#type_col.value(msgs_offset + i_msg);
+            let data_string = data_col.value(msgs_offset + i_msg);
+
+            agent_msgs.push(get_generic(&to, r#type, data_string)?);
+            to_offset += n_recipients;
         }
-        result.push(messages);
-        offset += messages_len;
+
+        agents_msgs.push(agent_msgs);
+        msgs_offset += n_agent_msgs;
     }
-    Ok(result)
+    Ok(agents_msgs)
 }
 
 pub fn column_into_state(
     states: &mut Vec<AgentState>,
     batch: &RecordBatch,
-    index: usize,
+    col_index: usize,
 ) -> Result<()> {
-    let reference = batch
-        .column(index)
+    let col_as_list_array = batch
+        .column(col_index)
         .as_any()
         .downcast_ref::<array::ListArray>()
         .ok_or(Error::InvalidArrowDowncast {
             name: MESSAGE_COLUMN_NAME.into(),
         })?;
 
-    let column = get_column_from_list_array(reference)?;
+    let column = messages_from_list_array(col_as_list_array)?;
     column
         .into_iter()
         .enumerate()
@@ -356,7 +400,7 @@ pub fn get_messages_column_from_batch(batch: &RecordBatch) -> Result<Vec<Vec<Out
             name: MESSAGE_COLUMN_NAME.into(),
         })?;
 
-    get_column_from_list_array(reference)
+    messages_from_list_array(reference)
 }
 
 pub fn batch_from_json(

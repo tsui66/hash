@@ -802,6 +802,9 @@ fn set_states_messages(states: &mut Vec<AgentState>, messages: &RecordBatch) -> 
         messages.schema(),
         std::sync::Arc::new(super::message::MESSAGE_BATCH_SCHEMA.clone())
     );
+    super::message::validate_recipient_offsets(messages)?;
+    tracing::debug!("validated offsets");
+
     super::message::column_into_state(states, messages, super::message::MESSAGE_COLUMN_INDEX)
 }
 

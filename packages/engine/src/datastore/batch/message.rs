@@ -16,7 +16,7 @@ use crate::{
                 record_batch_to_bytes, simulate_record_batch_to_bytes,
             },
             message::{
-                self, get_column_from_list_array, MESSAGE_COLUMN_INDEX, MESSAGE_COLUMN_NAME,
+                self, messages_from_list_array, MESSAGE_COLUMN_INDEX, MESSAGE_COLUMN_NAME,
             },
         },
         prelude::*,
@@ -329,7 +329,7 @@ impl Batch {
             .ok_or(Error::InvalidArrowDowncast {
                 name: MESSAGE_COLUMN_NAME.into(),
             })?;
-        get_column_from_list_array(reference)
+        messages_from_list_array(reference)
     }
 
     pub fn message_loader(&self) -> MessageLoader<'_> {
