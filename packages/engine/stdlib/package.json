@@ -18,7 +18,7 @@
   ],
   "scripts": {
     "build": "tsc -b src/ts",
-    "lint": "eslint src/ts/*.ts",
+    "lint": "eslint --report-unused-disable-directives src/ts/*.ts",
     "test": "jest"
   },
   "dependencies": {

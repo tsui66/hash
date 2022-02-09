@@ -11,8 +11,8 @@
   "scripts": {
     "clear-redis": "ts-node ./src/scripts/clear-redis.ts",
     "dev": "ts-node-dev --respawn --transpile-only ./src/index.ts",
-    "fix:eslint": "eslint --ext .ts --fix ./src/",
-    "lint:eslint": "eslint --ext .ts ./src/",
+    "fix:eslint": "eslint --report-unused-disable-directives --ext .ts --fix ./src/",
+    "lint:eslint": "eslint --report-unused-disable-directives --ext .ts ./src/",
     "lint:tsc": "tsc --noEmit",
     "start": "cross-env NODE_ENV=production ts-node ./src/index.ts"
   },

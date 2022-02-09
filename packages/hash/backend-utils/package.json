@@ -15,8 +15,8 @@
     }
   },
   "scripts": {
-    "fix:eslint": "eslint --ext .ts --fix ./src/",
-    "lint:eslint": "eslint --ext .ts ./src/",
+    "fix:eslint": "eslint --report-unused-disable-directives --ext .ts --fix ./src/",
+    "lint:eslint": "eslint --report-unused-disable-directives --ext .ts ./src/",
     "lint:tsc": "tsc --noEmit"
   },
   "dependencies": {

@@ -15,7 +15,6 @@ export const Checkbox: VoidFunctionComponent<CheckboxProps> = ({
   if (label) {
     return (
       <div>
-        {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
         <label>
           {label}
           <input

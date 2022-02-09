@@ -1,4 +1,3 @@
-/* eslint-disable no-console -- OK for CLI scripts */
 /**
  * Apply the schema migration files
  */
