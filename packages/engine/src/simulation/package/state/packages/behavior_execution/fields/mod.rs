@@ -3,7 +3,7 @@ pub mod behavior;
 use arrow::datatypes::DataType;
 
 use self::behavior::BehaviorMap;
-use super::BEHAVIOR_INDEX_INNER_COUNT;
+use super::BEHAVIOR_ID_INNER_COUNT;
 use crate::{
     config::ExperimentConfig,
     datastore::schema::{
@@ -44,7 +44,7 @@ fn behavior_id_field_type() -> FieldType {
     FieldType::new(
         FTV::FixedLengthArray {
             kind: Box::new(behavior_id_inner_field_type()),
-            len: BEHAVIOR_INDEX_INNER_COUNT,
+            len: BEHAVIOR_ID_INNER_COUNT,
         },
         false,
     )

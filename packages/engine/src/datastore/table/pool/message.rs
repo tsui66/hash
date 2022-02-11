@@ -1,6 +1,6 @@
 use std::{ops::Deref, sync::Arc};
 
-use parking_lot::{RwLock, RwLockReadGuard};
+use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use rayon::iter::{
     IndexedParallelIterator, IntoParallelIterator, IntoParallelRefIterator, ParallelIterator,
 };
@@ -29,6 +29,16 @@ impl MessagePool {
 
     fn batches_mut(&mut self) -> &mut Vec<Arc<RwLock<MessageBatch>>> {
         &mut self.batches
+    }
+
+    pub fn write_batches(&self) -> Result<Vec<RwLockWriteGuard<'_, MessageBatch>>> {
+        self.batches()
+            .iter()
+            .map(|a| {
+                a.try_write()
+                    .ok_or_else(|| Error::from("failed to write batches"))
+            })
+            .collect::<Result<_>>()
     }
 
     pub fn read_batches(&self) -> Result<Vec<RwLockReadGuard<'_, MessageBatch>>> {

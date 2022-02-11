@@ -332,7 +332,7 @@ class Runner:
             agent_pool[i_group].load_missing_cols(sim.schema.agent, sim.state_loaders)
 
             message_pool[i_group] = self.batches.sync(message_pool[i_group], sim.schema.message)
-            message_pool[i_group].load_missing_cols(sim.schema.message, sim.state_loaders)
+            message_pool[i_group].load_missing_cols(sim.schema.message, {})
 
     def state_sync(self, sim_id, agent_pool, message_pool):
         """

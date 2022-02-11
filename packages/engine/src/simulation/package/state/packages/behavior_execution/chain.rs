@@ -72,7 +72,7 @@ impl IntoArrowChange for ChainList {
         }
 
         let num_behavior_ids = mut_offsets[num_agents] as usize;
-        let num_indices = num_behavior_ids * BEHAVIOR_INDEX_INNER_COUNT;
+        let num_indices = num_behavior_ids * BEHAVIOR_ID_INNER_COUNT;
 
         let mut data = new_buffer::<BehaviorIdInnerDataType>(num_indices);
         let mut_data = data.typed_data_mut::<BehaviorIdInnerDataType>();

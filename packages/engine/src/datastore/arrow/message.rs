@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use arrow::array::StructArray;
 
 use lazy_static::lazy_static;
 
@@ -61,29 +62,54 @@ lazy_static! {
 }
 
 pub fn validate_recipient_offsets(msg_batch: &RecordBatch) -> Result<()> {
-    let msgs = msg_batch
-        .column(super::message::MESSAGE_COLUMN_INDEX)
+    let agents_msgs = msg_batch
+        .column(MESSAGE_COLUMN_INDEX)
         .as_any()
         .downcast_ref::<array::ListArray>()
-        .ok_or(Error::InvalidArrowDowncast { name: "messages".into() })?
-        .values();
+        .ok_or(Error::InvalidArrowDowncast { name: "messages".into() })?;
+    let n_agents = agents_msgs.len();
+    dbg!(&n_agents);
 
-    let recipients = msgs
+    let msgs = agents_msgs.values();
+    let total_num_msgs = msgs.len(); // across all agents
+    dbg!(&total_num_msgs);
+    let msgs = msgs
         .as_any()
-        .downcast_ref::<array::StructArray>()
-        .ok_or(Error::InvalidArrowDowncast { name: "messages".into() })?
+        .downcast_ref::<StructArray>()
+        .ok_or(Error::InvalidArrowDowncast { name: "messages".into() })?;
+
+    let msgs_recipients = msgs
         .columns()[0]
         .as_any()
         .downcast_ref::<array::ListArray>()
-        .ok_or(Error::InvalidArrowDowncast { name: "to".into() })?
-        .values();
+        .ok_or(Error::InvalidArrowDowncast { name: "to".into() })?;
+    let total_num_msgs_alt = msgs_recipients.len(); // across all agents
+    dbg!(&total_num_msgs_alt);
 
-    let recipient_strings = recipients
+    let mut i_msg = 0;
+    for i_agent in 0..n_agents {
+        let n_agent_msgs = agents_msgs.value_length(i_agent);
+        tracing::debug!("Agent {i_agent} has {n_agent_msgs} (outbox) messages");
+        for i_agent_msg in 0..n_agent_msgs {
+            let n_recipients = msgs_recipients.value_length(i_msg);
+            tracing::debug!("Message {i_agent_msg} ({i_msg}) has {n_recipients} recipients");
+            if n_recipients < 0 {
+                return Err(Error::from(format!(
+                    "Agent {i_agent} message {i_agent_msg} ({i_msg}) has {n_recipients}<0 recipients"
+                )));
+            }
+            i_msg += 1;
+        }
+    }
+
+    let recipient_strings = msgs_recipients.values();
+    let total_num_recipients = recipient_strings.len(); // across all agents
+    dbg!(&total_num_recipients);
+    let recipient_strings = recipient_strings
         .as_any()
         .downcast_ref::<array::StringArray>()
         .ok_or(Error::InvalidArrowDowncast { name: "to".into() })?;
 
-    let total_num_recipients = recipient_strings.len();
     for i_recipient in 0..total_num_recipients {
         let recipient_string_len = recipient_strings.value_length(i_recipient);
         tracing::debug!("Recipient {i_recipient} length: {recipient_string_len}");
@@ -108,7 +134,7 @@ pub fn get_message_arrow_builder() -> array::ListBuilder<array::StructBuilder> {
 }
 
 fn get_columns_from_struct_array(
-    array: &array::StructArray,
+    array: &StructArray,
 ) -> Result<(&array::ListArray, &array::StringArray, &array::StringArray)> {
     let columns = array.columns();
     if columns.len() != 3 {
@@ -319,20 +345,23 @@ pub fn messages_column_from_serde_values(
 }
 
 pub fn messages_from_list_array(array: &array::ListArray) -> Result<Vec<Vec<Outbound>>> {
+    tracing::debug!("converting messages");
     let n_agents = array.len();
+    dbg!(&n_agents);
     let mut agents_msgs = Vec::with_capacity(n_agents);
 
-    let vals = array.values();
-    let vals = vals
+    let all_msgs = array.values();
+    let all_msgs = all_msgs
         .as_any()
-        .downcast_ref()
+        .downcast_ref::<StructArray>()
         .ok_or(Error::InvalidArrowDowncast {
             name: MESSAGE_COLUMN_NAME.into(),
         })?;
+    dbg!(&all_msgs.len());
 
-    let (to_col, r#type_col, data_col) = get_columns_from_struct_array(vals)?;
-    let to_vals = to_col.values();
-    let to_vals = to_vals
+    let (to_col, r#type_col, data_col) = get_columns_from_struct_array(all_msgs)?;
+    let recipient_strings = to_col.values();
+    let recipient_strings = recipient_strings
         .as_any()
         .downcast_ref::<array::StringArray>()
         .ok_or(Error::InvalidArrowDowncast { name: "to".into() })?;
@@ -341,21 +370,23 @@ pub fn messages_from_list_array(array: &array::ListArray) -> Result<Vec<Vec<Outb
     let mut to_offset = 0;
 
     for i_agent in 0..n_agents {
-        let n_agent_msgs = array.value_length(i_agent) as usize;
+        let n_agent_msgs = array.value_length(i_agent);
+        dbg!(&n_agent_msgs);
+        let n_agent_msgs = n_agent_msgs as usize;
         let mut agent_msgs: Vec<Outbound> = Vec::with_capacity(n_agent_msgs);
 
         for i_msg in 0..n_agent_msgs {
             let n_recipients = to_col.value_length(msgs_offset + i_msg);
             tracing::debug!("n_recipients {n_recipients}");
             let n_recipients = n_recipients as usize;
-            let mut to: Vec<&str> = Vec::with_capacity(n_recipients);
+            let mut recipients: Vec<&str> = Vec::with_capacity(n_recipients);
             for i_recipient in 0..n_recipients {
-                to.push(to_vals.value(to_offset + i_recipient));
+                recipients.push(recipient_strings.value(to_offset + i_recipient));
             }
             let r#type = r#type_col.value(msgs_offset + i_msg);
-            let data_string = data_col.value(msgs_offset + i_msg);
+            let data_str = data_col.value(msgs_offset + i_msg);
 
-            agent_msgs.push(get_generic(&to, r#type, data_string)?);
+            agent_msgs.push(get_generic(&recipients, r#type, data_str)?);
             to_offset += n_recipients;
         }
 

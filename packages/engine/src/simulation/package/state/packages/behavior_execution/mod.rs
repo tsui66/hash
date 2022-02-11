@@ -28,8 +28,9 @@ use crate::{
     },
     Language,
 };
+use crate::simulation::package::state::packages::behavior_execution::tasks::ExecuteBehaviorsTaskMessage;
 
-pub const BEHAVIOR_INDEX_INNER_COUNT: usize = 2;
+pub const BEHAVIOR_ID_INNER_COUNT: usize = 2;
 
 pub type BehaviorIdInnerDataType = u16;
 pub type BehaviorIndexInnerDataType = f64;
@@ -215,6 +216,9 @@ impl BehaviorExecution {
 impl Package for BehaviorExecution {
     async fn run(&mut self, state: &mut ExState, context: &Context) -> Result<()> {
         tracing::trace!("Running BehaviorExecution");
+        if let Some(batch) = state.message_pool().read_batches()?.get(0) {
+            crate::datastore::arrow::message::validate_recipient_offsets(&batch.batch).unwrap();
+        }
         self.fix_behavior_chains(state)?;
         self.reset_behavior_index_col(state)?;
         state.flush_pending_columns()?;
@@ -232,6 +236,10 @@ impl Package for BehaviorExecution {
         // Wait for results
         // TODO: Get latest metaversions from message and reload state if necessary.
         tracing::trace!("BehaviorExecution task finished: {:?}", &msg);
+        state.reload().unwrap();
+        if let Some(batch) = state.message_pool().read_batches()?.get(0) {
+            crate::datastore::arrow::message::validate_recipient_offsets(&batch.batch).unwrap();
+        }
         Ok(())
     }
 }

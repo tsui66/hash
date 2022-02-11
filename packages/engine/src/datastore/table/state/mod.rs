@@ -249,6 +249,16 @@ impl ExState {
     pub fn flush_pending_columns(&mut self) -> Result<()> {
         self.inner.agent_pool.flush_pending_columns()
     }
+
+    pub fn reload(&mut self) -> Result<()> {
+        for mut batch in self.inner.agent_pool.write_batches()? {
+            batch.reload_record_batch_and_dynamic_meta()?;
+        }
+        for mut batch in self.inner.message_pool.write_batches()? {
+            batch.reload_record_batch_and_dynamic_meta()?;
+        }
+        Ok(())
+    }
 }
 
 impl ReadState for ExState {

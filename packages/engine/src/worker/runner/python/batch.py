@@ -108,6 +108,11 @@ class Batch:
         self.dynamic_meta = None
         self.static_meta = None
 
+    def _load_rb(self, schema=None):
+        self.rb, self.any_type_fields = load_record_batch(self.mem, schema)
+        self.cols = {}  # Avoid using obsolete column data.
+        self.static_meta = static_meta_from_schema(self.rb.schema)
+
     def sync(self, latest_batch, schema=None):
         should_load = self.batch_version < latest_batch.batch_version
         if self.mem_version < latest_batch.mem_version:
@@ -122,9 +127,7 @@ class Batch:
 
         if should_load:
             self.batch_version = latest_batch.batch_version
-            self.rb, self.any_type_fields = load_record_batch(self.mem, schema)
-            self.cols = {}  # Avoid using obsolete column data.
-            self.static_meta = static_meta_from_schema(self.rb.schema)
+            self._load_rb(schema)
 
     def load_col(self, name, loader=None):
         i_field = self.rb.schema.get_field_index(name)

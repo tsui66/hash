@@ -165,11 +165,21 @@ class GroupState:
         # in `batch.flush_changes`.
         group_msgs = self.__msg_batch.cols['messages']
         for i_agent, agent_msgs in enumerate(group_msgs):
+            print(f"Agent {i_agent} has {len(agent_msgs)} messages, with native {self.__msgs_native[i_agent]}: {agent_msgs}")
             if self.__msgs_native[i_agent]:
                 for msg in agent_msgs:
                     msg['data'] = json.dumps(msg['data'])
 
-        self.__msg_batch.flush_changes(schema.message, set())
+        print(f"Message schema: {schema.message}")
+        for x in self.__msg_batch.cols['messages']:
+            while len(x) > 1:
+                x.pop()
+        print(f"'messages' column to flush: {self.__msg_batch.cols['messages']}")
+        print(f"'from' column to flush: {self.__msg_batch.cols.get('from')}")
+        self.__msg_batch.flush_changes(schema.message, ())
+        self.__msg_batch._load_rb(schema=schema.message)
+        self.__msg_batch.load_col("messages")
+        print(f"'messages' column after flushing and reloading: {self.__msg_batch.cols['messages']}")
 
         return {
             "agent": self.__agent_batch,
