@@ -3,8 +3,6 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "fix:eslint": "eslint --ext .ts --fix .",
-    "lint:eslint": "eslint --ext .ts .",
     "lint:tsc": "tsc --noEmit"
   },
   "dependencies": {

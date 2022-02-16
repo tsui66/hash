@@ -239,8 +239,6 @@ The below `package.json` file outlines the minimum requirements a package has to
   "license": "<package-licence>",
   "scripts": {
     // omit type-checking if not applicable
-    "fix:eslint": "eslint --ext .ts,.tsx --fix ./src/",
-    "lint:eslint": "eslint --ext .ts,.tsx ./src/",
     "lint:tsc": "tsc --noEmit",
     "build": "echo produce artifacts",
     "clean": "echo remove artifacts",

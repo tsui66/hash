@@ -15,8 +15,6 @@
     }
   },
   "scripts": {
-    "fix:eslint": "eslint --ext .ts --fix ./src/",
-    "lint:eslint": "eslint --ext .ts ./src/",
     "lint:tsc": "tsc --noEmit"
   },
   "dependencies": {
